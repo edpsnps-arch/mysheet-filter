@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>मेरा फ़िल्टर वाला शीट</title>
+  <script src="https://cdn.jsdelivr.net/npm总书记/tablefilter@0.7.5/tablefilter.min.js"></script>
+  <style>
+    body {font-family: system-ui, sans-serif; margin:20px; background:#f4f6f9;}
+    h1 {text-align:center; color:#1a73e8;}
+    .search {width:100%; padding:12px; font-size:16px; margin:15px 0; border:2px solid #1a73e8; border-radius:8px;}
+    table {width:100%; border-collapse:collapse; margin-top:20px; background:white; box-shadow:0 4px 12px rgba(0,0,0,0.1);}
+    th, td {padding:12px; text-align:left; border-bottom:1px solid #ddd;}
+    th {background:#1a73e8; color:white; position:sticky; top:0;}
+    tr:hover {background:#f0f8ff;}
+    .tf-filter {background:#fff; border:1px solid #ccc; border-radius:4px;}
+  </style>
+</head>
+<body>
+
+  <h1>🔍 मेरा फ़िल्टर वाला Google Sheet</h1>
+  <input type="text" id="globalSearch" class="search" placeholder="कुछ भी सर्च करें..." />
+
+  <div id="tableContainer"></div>
+
+  <script>
+    // ←←← YAHAN APNA CSV LINK DAALO ←←←
+    const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT.../pub?output=csv";
+
+    fetch(CSV_URL)
+      .then(r => r.text())
+      .then(csv => {
+        // CSV → HTML table
+        const rows = csv.trim().split("\n").map(r => r.split(","));
+        const headers = rows[0];
+        const data = rows.slice(1);
+
+        let tableHTML = "<table id='myTable'><thead><tr>";
+        headers.forEach(h => tableHTML += `<th>${h}</th>`);
+        tableHTML += "</tr></thead><tbody>";
+        data.forEach(row => {
+          tableHTML += "<tr>";
+          row.forEach(cell => tableHTML += `<td>${cell}</td>`);
+          tableHTML += "</tr>";
+        });
+        tableHTML += "</tbody></table>";
+        document.getElementById("tableContainer").innerHTML = tableHTML;
+
+        // TableFilter lagao (zero-config)
+        new TableFilter('myTable', {
+          base_path: 'https://cdn.jsdelivr.net/npm/tablefilter@0.7.5/',
+          paging: {results_per_page: ['दिखाएँ ', [10, 25, 50, 100], ' प्रति पेज']},
+          btn_reset: true,
+          loader: true,
+          alternate_rows: true,
+          grid_layout: {width: '100%'},
+          col_types: headers.map(() => 'string'), // sab string treat karo
+          extensions: [{ name: 'sort' }]
+        });
+
+        // Global search
+        document.getElementById("globalSearch").addEventListener("keyup", function() {
+          const val = this.value;
+          document.querySelectorAll("#myTable tbody tr").forEach(tr => {
+            tr.style.display = tr.textContent.toLowerCase().includes(val.toLowerCase()) ? "" : "none";
+          });
+        });
+      })
+      .catch(err => {
+        document.getElementById("tableContainer").innerHTML = 
+          "<p style='color:red;text-align:center;'>❌ लिंक चेक करें या इंटरनेट कनेक्शन देखें।</p>";
+      });
+  </script>
+
+  <center><small>🔧 बनाया: Grok  •  2 मिनट में Live!</small></center>
+</body>
+</html>
